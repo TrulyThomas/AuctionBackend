@@ -44,8 +44,7 @@ const typeDefs = `
 
   type Query {
     allItems: [Item!]!
-    getItem: Item!
-
+    getItem(id: Int!): Item
     allAuctions: [Auction!]
   }
 `
@@ -55,8 +54,11 @@ const resolvers = {
     allItems: () => {
       return prisma.item.findMany()
     },
-    getItem: (id: number) => {
+    getItem: (_ : any, {id} : {id: number} ) => {
       return prisma.item.findUnique({ where: { id: id } })
+    },
+    allAuctions: () => {
+      return prisma.auction.findMany()
     }
   }
 }
