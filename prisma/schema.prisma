@@ -11,9 +11,51 @@ datasource db {
 }
 
 model Item {
-  id Int @id @default(autoincrement())
-  initialPrice Float
-  quantity Int
-  name String
-  text String
+  id           Int      @id @default(autoincrement())
+  initialPrice Float    @default(0)
+  quantity     Int      @default(1)
+  name         String
+  text         String?
+  Auction      Auction? @relation(fields: [auctionId], references: [id])
+  auctionId    Int?
+  createdDate  DateTime @default(now())
+}
+
+model Auction {
+  id            Int      @id @default(autoincrement())
+  createdDate   DateTime @default(now())
+  startDate     DateTime
+  endDate       DateTime
+  extendedTime  Float    @default(0)
+  startingPrice Float    @default(0)
+  Winner        Account? @relation("winner", fields: [accountIdWinner], references: [id])
+  Items         Item[]
+  Bids          Bid[]
+  Closed        Boolean  @default(false)
+
+  accountIdWinner Int
+  accountIdOwner  Int
+  Account         Account @relation("owner", fields: [accountIdOwner], references: [id])
+}
+
+model Account {
+  id          Int      @id @default(autoincrement())
+  userName    String
+  passeWord   String
+  email       String   @unique
+  createdDate DateTime @default(now())
+
+  Credits Float @default(0)
+
+  AuctionsWins  Auction[] @relation("winner")
+  AuctionsOwner Auction[] @relation("owner")
+  role          String    @default("User")
+}
+
+model Bid {
+  id          Int      @id @default(autoincrement())
+  Auction     Auction  @relation(fields: [auctionId], references: [id])
+  auctionId   Int
+  createdDate DateTime @default(now())
+  Bid         Float
 }
