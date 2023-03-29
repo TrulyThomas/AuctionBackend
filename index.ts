@@ -1,82 +1,64 @@
-var express = require('express')
-import { PrismaClient } from '@prisma/client'
+import express from 'express'
+import { Item, PrismaClient } from '@prisma/client'
 var { graphqlHTTP } = require('express-graphql')
 var { makeExecutableSchema } = require('@graphql-tools/schema')
+const { loadFiles } = require('@graphql-tools/load-files')
+
 const cors = require('cors')
 
-const prisma = new PrismaClient()
-
-const typeDefs = `
-  type Item {
-    id: Int!
-    initialPrice: Float!
-    quantity: Int!
-    name: String
-    text: String
-  }
-
-  type Account {
-    id: Int!
-    userName: String!
-    email: String!
-    createdDate: String!
-    credits: String!
-  }
-
-  type Auction{
-    id: Int!
-    createdDate: String!
-    startDate: String!
-    endDate: String!
-    extendedTime: Float!
-    startingPrice: Float!
-    winner: Account
-    items: [Item!]!
-    bids: [Bid]
-    closed: Boolean!
-  }
-
-  type Bid{
-    id: Int!
-    auction: Auction!
-    bid: Float!
-  }
-
-  type Query {
-    allItems: [Item!]!
-    getItem(id: Int!): Item
-    allAuctions: [Auction!]
-  }
-`
-
-const resolvers = {
-  Query: {
-    allItems: () => {
-      return prisma.item.findMany()
-    },
-    getItem: (_ : any, {id} : {id: number} ) => {
-      return prisma.item.findUnique({ where: { id: id } })
-    },
-    allAuctions: () => {
-      return prisma.auction.findMany()
-    }
-  }
+type NewItem = {
+  name: string
+  text: string
 }
 
-export const schema = makeExecutableSchema({
-  resolvers,
-  typeDefs
-})
+const main = async () => {
+  const prisma = new PrismaClient()
 
-var app = express()
-app.use(cors())
-app.use(
-  '/graphql',
-  graphqlHTTP({
-    schema: schema,
-    graphiql: true
+  const resolvers = {
+    Query: {
+      allItems: () => {
+        return prisma.item.findMany()
+      },
+      getItem: (_: any, { id }: { id: number }) => {
+        return prisma.item.findUnique({ where: { id: id } })
+      },
+      allAuctions: () => {
+        return prisma.auction.findMany()
+      }
+    },
+    Mutation: {
+      newItem: (_: any, name: string) => {
+        return prisma.item.create({
+          data: { name: name }
+        })
+      }
+    }
+  }
+
+  const typeDefs = await loadFiles('./schema.graphql')
+
+  const schema = makeExecutableSchema({
+    resolvers,
+    typeDefs: typeDefs
   })
-)
 
-app.listen(4000)
-console.log('BIG vibe')
+  var app = express()
+  app.use(cors())
+  app.use(
+    '/graphql',
+    graphqlHTTP({
+      schema: schema,
+      graphiql: true
+    })
+  )
+  app.get('/image/:imageId', (req, res) => {
+    return prisma.image.findUnique({
+      where: { id: parseInt(req.params.imageId) }
+    })
+  })
+
+  app.listen(4000)
+  console.log('BIG vibe')
+}
+
+main().catch((e) => console.log(e))

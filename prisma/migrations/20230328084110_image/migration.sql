@@ -1,0 +1,8 @@
+-- CreateTable
+CREATE TABLE "Image" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "data" BLOB NOT NULL,
+    "order" INTEGER NOT NULL,
+    "itemId" INTEGER,
+    CONSTRAINT "Image_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);

@@ -1,0 +1,50 @@
+type Item {
+  id: Int!
+  initialPrice: Float!
+  quantity: Int!
+  name: String
+  text: String
+  image: [Image]
+}
+
+type Account {
+  id: Int!
+  userName: String!
+  email: String!
+  createdDate: String!
+  credits: String!
+}
+
+type Image {
+  id: Int!
+  url: String!
+}
+
+type Auction {
+  id: Int!
+  createdDate: String!
+  startDate: String!
+  endDate: String!
+  extendedTime: Float!
+  startingPrice: Float!
+  winner: Account
+  items: [Item!]!
+  bids: [Bid]
+  closed: Boolean!
+}
+
+type Bid {
+  id: Int!
+  auction: Auction!
+  bid: Float!
+}
+
+type Query {
+  allItems: [Item!]!
+  getItem(id: Int!): Item
+  allAuctions: [Auction!]
+}
+
+type Mutation {
+  newItem(name: String!): Item
+}

@@ -6,11 +6,13 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\""
+    "debug": "npx tsc && node --inspect dist/index.js",
+    "dev": "concurrently \"npx tsc --watch\" \"nodemon --inspect index.js\""
   },
-  "author": "Thomas Damsgaard",
+  "author": "Thomas Damsgaard & Malthe 'KING' Emtkjær",
   "license": "ISC",
   "dependencies": {
+    "@graphql-tools/load-files": "^6.6.1",
     "@graphql-tools/schema": "^9.0.17",
     "@prisma/client": "^4.11.0",
     "cors": "^2.8.5",
