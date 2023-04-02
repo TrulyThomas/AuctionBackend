@@ -33,9 +33,14 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
             }
         },
         Mutation: {
-            newItem: (_, input) => {
+            newItem: (_, { item }) => {
                 return prisma.item.create({
-                    data: { name: input.name }
+                    data: {
+                        name: item.name,
+                        text: item.text ? item.text : undefined,
+                        initialPrice: item.initialPrice ? item.initialPrice : undefined,
+                        quantity: item.quantity ? item.quantity : undefined
+                    }
                 });
             }
         }

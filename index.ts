@@ -1,5 +1,6 @@
 import express from 'express'
-import { Item, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
+import { Item, ItemInput } from './gql-types'
 var { graphqlHTTP } = require('express-graphql')
 var { makeExecutableSchema } = require('@graphql-tools/schema')
 const { loadFiles } = require('@graphql-tools/load-files')
@@ -27,9 +28,14 @@ const main = async () => {
       }
     },
     Mutation: {
-      newItem: (_: any, name: string) => {
+      newItem: (_: any, { item }: { item: ItemInput }) => {
         return prisma.item.create({
-          data: { name: name }
+          data: {
+            name: item.name,
+            text: item.text ? item.text : undefined,
+            initialPrice: item.initialPrice ? item.initialPrice : undefined,
+            quantity: item.quantity ? item.quantity : undefined
+          }
         })
       }
     }

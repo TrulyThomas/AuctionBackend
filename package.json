@@ -7,7 +7,8 @@
     "build": "npx tsc",
     "start": "node dist/index.js",
     "debug": "npx tsc && node --inspect dist/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon --inspect index.js\""
+    "generate": "graphql-codegen",
+    "dev": "concurrently \"npx tsc --watch\" \"graphql-codegen\" \"nodemon --inspect index.js\""
   },
   "author": "Thomas Damsgaard & Malthe 'KING' Emtkjær",
   "license": "ISC",
@@ -21,9 +22,12 @@
     "graphql": "^15.8.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^3.2.2",
+    "@graphql-codegen/typescript": "^3.0.2",
     "@types/express": "^4.17.17",
     "@types/node": "^18.14.6",
     "concurrently": "^7.6.0",
+    "graphql-codegen": "^0.4.0",
     "nodemon": "^2.0.21",
     "prisma": "^4.11.0",
     "typescript": "^4.9.5"

@@ -2,9 +2,18 @@ type Item {
   id: Int!
   initialPrice: Float!
   quantity: Int!
-  name: String
+  name: String!
   text: String
   image: [Image]
+}
+
+input ItemInput {
+  id: Int
+  initialPrice: Float
+  quantity: Int
+  name: String!
+  text: String
+  images: [String]
 }
 
 type Account {
@@ -46,5 +55,5 @@ type Query {
 }
 
 type Mutation {
-  newItem(name: String!): Item
+  newItem(item: ItemInput!): Item
 }
