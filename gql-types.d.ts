@@ -44,14 +44,13 @@ export type Bid = {
 
 export type Image = {
   __typename?: 'Image';
-  id: Scalars['Int'];
-  url: Scalars['String'];
+  id?: Maybe<Scalars['String']>;
 };
 
 export type Item = {
   __typename?: 'Item';
   id: Scalars['Int'];
-  image?: Maybe<Array<Maybe<Image>>>;
+  images?: Maybe<Array<Maybe<Image>>>;
   initialPrice: Scalars['Float'];
   name: Scalars['String'];
   quantity: Scalars['Int'];
