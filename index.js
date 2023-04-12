@@ -34,14 +34,14 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                         text: true,
                         initialPrice: true,
                         quantity: true,
-                        Images: {
+                        images: {
                             select: {
-                                id: true
+                                base64data: true
                             }
                         }
                     }
                 });
-                return Object.assign(Object.assign({}, item), { images: item === null || item === void 0 ? void 0 : item.Images });
+                return Object.assign(Object.assign({}, item), { images: item === null || item === void 0 ? void 0 : item.images });
             }),
             allAuctions: () => {
                 return prisma.auction.findMany();
@@ -49,22 +49,36 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         },
         Mutation: {
             newItem: (_, { item }) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a;
-                const newItem = yield prisma.item.create({
-                    data: {
+                var _a, _b, _c, _d, _e, _f;
+                console.log(item);
+                const newItem = yield prisma.item.upsert({
+                    where: { id: (_a = item.id) !== null && _a !== void 0 ? _a : 0 },
+                    update: {
                         name: item.name,
                         text: item.text ? item.text : undefined,
                         initialPrice: item.initialPrice
                             ? item.initialPrice
                             : undefined,
                         quantity: item.quantity ? item.quantity : undefined
+                    },
+                    create: {
+                        name: item.name,
+                        text: (_b = item.text) !== null && _b !== void 0 ? _b : undefined,
+                        initialPrice: (_c = item.initialPrice) !== null && _c !== void 0 ? _c : undefined,
+                        quantity: (_d = item.quantity) !== null && _d !== void 0 ? _d : undefined
                     }
                 });
                 let i = 0;
-                for (const image of (_a = item.images) !== null && _a !== void 0 ? _a : []) {
-                    yield prisma.image.create({
-                        data: {
-                            base64data: image,
+                for (const image of (_e = item.images) !== null && _e !== void 0 ? _e : []) {
+                    yield prisma.image.upsert({
+                        where: { id: (_f = item.id) !== null && _f !== void 0 ? _f : 0 },
+                        update: {
+                            base64data: image === null || image === void 0 ? void 0 : image.base64data,
+                            order: i++,
+                            Item: { connect: { id: newItem.id } }
+                        },
+                        create: {
+                            base64data: image === null || image === void 0 ? void 0 : image.base64data,
                             order: i++,
                             Item: { connect: { id: newItem.id } }
                         }

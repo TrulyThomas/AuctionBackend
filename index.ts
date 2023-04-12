@@ -29,17 +29,16 @@ const main = async () => {
                   text: true,
                   initialPrice: true,
                   quantity: true,
-
-                  Images: {
+                  images: {
                      select: {
-                        id: true
+                        base64data: true
                      }
                   }
                }
             })
             return {
                ...item,
-               images: item?.Images
+               images: item?.images
             } as Item
          },
          allAuctions: () => {
@@ -48,22 +47,37 @@ const main = async () => {
       },
       Mutation: {
          newItem: async (_: any, { item }: { item: ItemInput }) => {
-            const newItem = await prisma.item.create({
-               data: {
+            console.log(item)
+
+            const newItem = await prisma.item.upsert({
+               where: { id: item.id ?? 0 },
+               update: {
                   name: item.name,
                   text: item.text ? item.text : undefined,
                   initialPrice: item.initialPrice
                      ? item.initialPrice
                      : undefined,
                   quantity: item.quantity ? item.quantity : undefined
+               },
+               create: {
+                  name: item.name,
+                  text: item.text ?? undefined,
+                  initialPrice: item.initialPrice ?? undefined,
+                  quantity: item.quantity ?? undefined
                }
             })
 
             let i = 0
             for (const image of item.images ?? []) {
-               await prisma.image.create({
-                  data: {
-                     base64data: image!,
+               await prisma.image.upsert({
+                  where: { id: item.id ?? 0 },
+                  update: {
+                     base64data: image?.base64data!,
+                     order: i++,
+                     Item: { connect: { id: newItem.id } }
+                  },
+                  create: {
+                     base64data: image?.base64data!,
                      order: i++,
                      Item: { connect: { id: newItem.id } }
                   }

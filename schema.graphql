@@ -7,17 +7,13 @@ type Item {
    images: [Image]
 }
 
-type Image {
-   id: String
-}
-
 input ItemInput {
    id: Int
    initialPrice: Float
    quantity: Int
    name: String!
    text: String
-   images: [String]
+   images: [ImageInput]
 }
 
 type Account {
@@ -26,6 +22,19 @@ type Account {
    email: String!
    createdDate: String!
    credits: String!
+}
+
+type Image {
+   order: Int
+   id: Int!
+   url: String!
+   base64data: String!
+}
+input ImageInput {
+   order: Int
+   id: Int
+   url: String
+   base64data: String!
 }
 
 type Auction {

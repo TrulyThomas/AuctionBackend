@@ -44,7 +44,17 @@ export type Bid = {
 
 export type Image = {
   __typename?: 'Image';
-  id?: Maybe<Scalars['String']>;
+  base64data: Scalars['String'];
+  id: Scalars['Int'];
+  order?: Maybe<Scalars['Int']>;
+  url: Scalars['String'];
+};
+
+export type ImageInput = {
+  base64data: Scalars['String'];
+  id?: InputMaybe<Scalars['Int']>;
+  order?: InputMaybe<Scalars['Int']>;
+  url?: InputMaybe<Scalars['String']>;
 };
 
 export type Item = {
@@ -59,7 +69,7 @@ export type Item = {
 
 export type ItemInput = {
   id?: InputMaybe<Scalars['Int']>;
-  images?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
+  images?: InputMaybe<Array<InputMaybe<ImageInput>>>;
   initialPrice?: InputMaybe<Scalars['Float']>;
   name: Scalars['String'];
   quantity?: InputMaybe<Scalars['Int']>;
