@@ -31,7 +31,9 @@ const main = async () => {
                   quantity: true,
                   images: {
                      select: {
-                        base64data: true
+                        base64data: true,
+                        order: true,
+                        id: true
                      }
                   }
                }
@@ -47,8 +49,6 @@ const main = async () => {
       },
       Mutation: {
          newItem: async (_: any, { item }: { item: ItemInput }) => {
-            console.log(item)
-
             const newItem = await prisma.item.upsert({
                where: { id: item.id ?? 0 },
                update: {
@@ -67,20 +67,39 @@ const main = async () => {
                }
             })
 
+            let itemImages = await prisma.image.findMany({
+               where: { itemId: newItem.id },
+               select: { id: true }
+            })
+
+            console.log(itemImages)
+
+            const imageIds = item.images
+               ?.filter((i) => i?.id)
+               .map((image) => image?.id!)
+            if (!imageIds) return
+
+            itemImages
+               .filter((i) => !imageIds.includes(i.id))
+               .forEach(async (i) => {
+                  console.log(i.id)
+                  await prisma.image.delete({ where: { id: i.id } })
+               })
+
             let i = 0
             for (const image of item.images ?? []) {
                await prisma.image.upsert({
-                  where: { id: item.id ?? 0 },
+                  create: {
+                     base64data: image?.base64data!,
+                     order: i++,
+                     Item: { connect: { id: newItem.id } }
+                  },
                   update: {
                      base64data: image?.base64data!,
                      order: i++,
                      Item: { connect: { id: newItem.id } }
                   },
-                  create: {
-                     base64data: image?.base64data!,
-                     order: i++,
-                     Item: { connect: { id: newItem.id } }
-                  }
+                  where: { id: image?.id ?? 0 }
                })
             }
 

@@ -36,7 +36,9 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                         quantity: true,
                         images: {
                             select: {
-                                base64data: true
+                                base64data: true,
+                                order: true,
+                                id: true
                             }
                         }
                     }
@@ -49,8 +51,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         },
         Mutation: {
             newItem: (_, { item }) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a, _b, _c, _d, _e, _f;
-                console.log(item);
+                var _a, _b, _c, _d, _e, _f, _g;
                 const newItem = yield prisma.item.upsert({
                     where: { id: (_a = item.id) !== null && _a !== void 0 ? _a : 0 },
                     update: {
@@ -68,20 +69,34 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                         quantity: (_d = item.quantity) !== null && _d !== void 0 ? _d : undefined
                     }
                 });
+                let itemImages = yield prisma.image.findMany({
+                    where: { itemId: newItem.id },
+                    select: { id: true }
+                });
+                console.log(itemImages);
+                const imageIds = (_e = item.images) === null || _e === void 0 ? void 0 : _e.filter((i) => i === null || i === void 0 ? void 0 : i.id).map((image) => image === null || image === void 0 ? void 0 : image.id);
+                if (!imageIds)
+                    return;
+                itemImages
+                    .filter((i) => !imageIds.includes(i.id))
+                    .forEach((i) => __awaiter(void 0, void 0, void 0, function* () {
+                    console.log(i.id);
+                    yield prisma.image.delete({ where: { id: i.id } });
+                }));
                 let i = 0;
-                for (const image of (_e = item.images) !== null && _e !== void 0 ? _e : []) {
+                for (const image of (_f = item.images) !== null && _f !== void 0 ? _f : []) {
                     yield prisma.image.upsert({
-                        where: { id: (_f = item.id) !== null && _f !== void 0 ? _f : 0 },
+                        create: {
+                            base64data: image === null || image === void 0 ? void 0 : image.base64data,
+                            order: i++,
+                            Item: { connect: { id: newItem.id } }
+                        },
                         update: {
                             base64data: image === null || image === void 0 ? void 0 : image.base64data,
                             order: i++,
                             Item: { connect: { id: newItem.id } }
                         },
-                        create: {
-                            base64data: image === null || image === void 0 ? void 0 : image.base64data,
-                            order: i++,
-                            Item: { connect: { id: newItem.id } }
-                        }
+                        where: { id: (_g = image === null || image === void 0 ? void 0 : image.id) !== null && _g !== void 0 ? _g : 0 }
                     });
                 }
                 return newItem;

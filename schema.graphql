@@ -25,7 +25,7 @@ type Account {
 }
 
 type Image {
-   order: Int
+   order: Int!
    id: Int!
    url: String!
    base64data: String!

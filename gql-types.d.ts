@@ -46,7 +46,7 @@ export type Image = {
   __typename?: 'Image';
   base64data: Scalars['String'];
   id: Scalars['Int'];
-  order?: Maybe<Scalars['Int']>;
+  order: Scalars['Int'];
   url: Scalars['String'];
 };
 
