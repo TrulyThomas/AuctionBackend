@@ -16,19 +16,18 @@ model Item {
   quantity     Int      @default(1)
   name         String
   text         String?
-  image        Image[]
-  Auction      Auction? @relation(fields: [auctionId], references: [id])
+  images       Image[]
+  auction      Auction? @relation(fields: [auctionId], references: [id])
   auctionId    Int?
   createdDate  DateTime @default(now())
 }
 
 model Image {
-  id     Int    @id @default(autoincrement())
-  data   Bytes
-  url    String
-  order  Int
-  Item   Item?  @relation(fields: [itemId], references: [id])
-  itemId Int?
+  id         Int    @id @default(autoincrement())
+  base64data String
+  order      Int
+  itemId     Int?
+  Item       Item?  @relation(fields: [itemId], references: [id])
 }
 
 model Auction {

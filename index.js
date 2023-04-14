@@ -25,24 +25,80 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
             allItems: () => {
                 return prisma.item.findMany();
             },
-            getItem: (_, { id }) => {
-                return prisma.item.findUnique({ where: { id: id } });
-            },
+            getItem: (_, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+                let item = yield prisma.item.findUnique({
+                    where: { id: id },
+                    select: {
+                        id: true,
+                        name: true,
+                        text: true,
+                        initialPrice: true,
+                        quantity: true,
+                        images: {
+                            select: {
+                                base64data: true,
+                                order: true,
+                                id: true
+                            }
+                        }
+                    }
+                });
+                return Object.assign(Object.assign({}, item), { images: item === null || item === void 0 ? void 0 : item.images });
+            }),
             allAuctions: () => {
                 return prisma.auction.findMany();
             }
         },
         Mutation: {
-            newItem: (_, { item }) => {
-                return prisma.item.create({
-                    data: {
+            newItem: (_, { item }) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c, _d, _e, _f, _g;
+                const newItem = yield prisma.item.upsert({
+                    where: { id: (_a = item.id) !== null && _a !== void 0 ? _a : 0 },
+                    update: {
                         name: item.name,
                         text: item.text ? item.text : undefined,
-                        initialPrice: item.initialPrice ? item.initialPrice : undefined,
+                        initialPrice: item.initialPrice
+                            ? item.initialPrice
+                            : undefined,
                         quantity: item.quantity ? item.quantity : undefined
+                    },
+                    create: {
+                        name: item.name,
+                        text: (_b = item.text) !== null && _b !== void 0 ? _b : undefined,
+                        initialPrice: (_c = item.initialPrice) !== null && _c !== void 0 ? _c : undefined,
+                        quantity: (_d = item.quantity) !== null && _d !== void 0 ? _d : undefined
                     }
                 });
-            }
+                let itemImages = yield prisma.image.findMany({
+                    where: { itemId: newItem.id },
+                    select: { id: true }
+                });
+                const imageIds = (_e = item.images) === null || _e === void 0 ? void 0 : _e.filter((i) => i === null || i === void 0 ? void 0 : i.id).map((image) => image === null || image === void 0 ? void 0 : image.id);
+                if (!imageIds)
+                    return;
+                itemImages
+                    .filter((i) => !imageIds.includes(i.id))
+                    .forEach((i) => __awaiter(void 0, void 0, void 0, function* () {
+                    yield prisma.image.delete({ where: { id: i.id } });
+                }));
+                let i = 0;
+                for (const image of (_f = item.images) !== null && _f !== void 0 ? _f : []) {
+                    yield prisma.image.upsert({
+                        create: {
+                            base64data: image === null || image === void 0 ? void 0 : image.base64data,
+                            order: i++,
+                            Item: { connect: { id: newItem.id } }
+                        },
+                        update: {
+                            base64data: image === null || image === void 0 ? void 0 : image.base64data,
+                            order: i++,
+                            Item: { connect: { id: newItem.id } }
+                        },
+                        where: { id: (_g = image === null || image === void 0 ? void 0 : image.id) !== null && _g !== void 0 ? _g : 0 }
+                    });
+                }
+                return newItem;
+            })
         }
     };
     const typeDefs = yield loadFiles('./schema.graphql');
@@ -51,16 +107,12 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         typeDefs: typeDefs
     });
     var app = (0, express_1.default)();
+    app.use(express_1.default.json({ limit: '50mb' }));
     app.use(cors());
     app.use('/graphql', graphqlHTTP({
         schema: schema,
         graphiql: true
     }));
-    app.get('/image/:imageId', (req, res) => {
-        return prisma.image.findUnique({
-            where: { id: parseInt(req.params.imageId) }
-        });
-    });
     app.listen(4000);
     console.log('BIG vibe');
 });
