@@ -73,14 +73,12 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     where: { itemId: newItem.id },
                     select: { id: true }
                 });
-                console.log(itemImages);
                 const imageIds = (_e = item.images) === null || _e === void 0 ? void 0 : _e.filter((i) => i === null || i === void 0 ? void 0 : i.id).map((image) => image === null || image === void 0 ? void 0 : image.id);
                 if (!imageIds)
                     return;
                 itemImages
                     .filter((i) => !imageIds.includes(i.id))
                     .forEach((i) => __awaiter(void 0, void 0, void 0, function* () {
-                    console.log(i.id);
                     yield prisma.image.delete({ where: { id: i.id } });
                 }));
                 let i = 0;
@@ -114,14 +112,6 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     app.use('/graphql', graphqlHTTP({
         schema: schema,
         graphiql: true
-    }));
-    app.get('/image/:imageId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        res.type('image/png');
-        let image = yield prisma.image.findUnique({
-            where: { id: parseInt(req.params.imageId) }
-        });
-        const imageBuffer = Buffer.from(image === null || image === void 0 ? void 0 : image.base64data, 'base64');
-        res.send(imageBuffer);
     }));
     app.listen(4000);
     console.log('BIG vibe');

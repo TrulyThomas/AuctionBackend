@@ -7,11 +7,6 @@ const { loadFiles } = require('@graphql-tools/load-files')
 
 const cors = require('cors')
 
-type NewItem = {
-   name: string
-   text: string
-}
-
 const main = async () => {
    const prisma = new PrismaClient()
 
@@ -72,8 +67,6 @@ const main = async () => {
                select: { id: true }
             })
 
-            console.log(itemImages)
-
             const imageIds = item.images
                ?.filter((i) => i?.id)
                .map((image) => image?.id!)
@@ -82,7 +75,6 @@ const main = async () => {
             itemImages
                .filter((i) => !imageIds.includes(i.id))
                .forEach(async (i) => {
-                  console.log(i.id)
                   await prisma.image.delete({ where: { id: i.id } })
                })
 
@@ -102,7 +94,6 @@ const main = async () => {
                   where: { id: image?.id ?? 0 }
                })
             }
-
             return newItem
          }
       }
@@ -125,16 +116,6 @@ const main = async () => {
          graphiql: true
       })
    )
-   app.get('/image/:imageId', async (req, res) => {
-      res.type('image/png')
-      let image = await prisma.image.findUnique({
-         where: { id: parseInt(req.params.imageId) }
-      })
-
-      const imageBuffer = Buffer.from(image?.base64data!, 'base64')
-
-      res.send(imageBuffer)
-   })
 
    app.listen(4000)
    console.log('BIG vibe')
