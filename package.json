@@ -5,8 +5,7 @@
    "main": "index.js",
    "scripts": {
       "build": "npx tsc",
-      "start": "node dist/index.js",
-      "debug": "npx tsc && node --inspect dist/index.js",
+      "start": "npx tsc && node index.js",
       "generate": "graphql-codegen --config ../codegen.yaml",
       "dev": "concurrently \"npx tsc --watch\" \"graphql-codegen --config ../codegen.yaml\" \"nodemon --inspect index.js\""
    },
