@@ -1,6 +1,6 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
-import { Item, ItemInput } from './gql-types'
+import { Item, ItemInput, MabyeAccount } from './gql-types'
 var { graphqlHTTP } = require('express-graphql')
 var { makeExecutableSchema } = require('@graphql-tools/schema')
 const { loadFiles } = require('@graphql-tools/load-files')
@@ -38,8 +38,25 @@ const main = async () => {
                images: item?.images
             } as Item
          },
-         allAuctions: () => {
+         allAuctions: async () => {
             return prisma.auction.findMany()
+         },
+         login: async (_: any, { email, password }: { email: string; password: string }) => {
+            const account = await prisma.account.findMany({
+               where: { email: email, password: password },
+               select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  credits: true,
+                  createdDate: true
+               }
+            })
+
+            if (account.length == 0) throw new Error('No account found')
+            if (account.length > 1) throw new Error('Multiple accounts found')
+
+            return account[0]
          }
       },
       Mutation: {
@@ -49,9 +66,7 @@ const main = async () => {
                update: {
                   name: item.name,
                   text: item.text ? item.text : undefined,
-                  initialPrice: item.initialPrice
-                     ? item.initialPrice
-                     : undefined,
+                  initialPrice: item.initialPrice ? item.initialPrice : undefined,
                   quantity: item.quantity ? item.quantity : undefined
                },
                create: {
@@ -67,9 +82,7 @@ const main = async () => {
                select: { id: true }
             })
 
-            const imageIds = item.images
-               ?.filter((i) => i?.id)
-               .map((image) => image?.id!)
+            const imageIds = item.images?.filter((i) => i?.id).map((image) => image?.id!)
             if (!imageIds) return
 
             itemImages
@@ -95,6 +108,19 @@ const main = async () => {
                })
             }
             return newItem
+         },
+         signup: async (_: any, { username, password, email }: { username: string; password: string; email: string }) => {
+            if (username == '' || password == '' || email == '') throw new Error('Missing fields')
+
+            const account = await prisma.account.create({
+               data: {
+                  username: username,
+                  email: email,
+                  password: password
+               }
+            })
+
+            return account
          }
       }
    }

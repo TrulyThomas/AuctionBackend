@@ -18,7 +18,7 @@ input ItemInput {
 
 type Account {
    id: Int!
-   userName: String!
+   username: String!
    email: String!
    createdDate: String!
    credits: String!
@@ -56,12 +56,19 @@ type Bid {
    bid: Float!
 }
 
+type MabyeAccount {
+   account: Account
+   error: String
+}
+
 type Query {
    allItems: [Item!]!
    getItem(id: Int!): Item
    allAuctions: [Auction!]
+   login(email: String!, password: String!): Account
 }
 
 type Mutation {
    newItem(item: ItemInput!): Item
+   signup(username: String!, password: String!, email: String!): Account
 }

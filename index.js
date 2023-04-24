@@ -45,9 +45,26 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                 });
                 return Object.assign(Object.assign({}, item), { images: item === null || item === void 0 ? void 0 : item.images });
             }),
-            allAuctions: () => {
+            allAuctions: () => __awaiter(void 0, void 0, void 0, function* () {
                 return prisma.auction.findMany();
-            }
+            }),
+            login: (_, { email, password }) => __awaiter(void 0, void 0, void 0, function* () {
+                const account = yield prisma.account.findMany({
+                    where: { email: email, password: password },
+                    select: {
+                        id: true,
+                        username: true,
+                        email: true,
+                        credits: true,
+                        createdDate: true
+                    }
+                });
+                if (account.length == 0)
+                    throw new Error('No account found');
+                if (account.length > 1)
+                    throw new Error('Multiple accounts found');
+                return account[0];
+            })
         },
         Mutation: {
             newItem: (_, { item }) => __awaiter(void 0, void 0, void 0, function* () {
@@ -57,9 +74,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     update: {
                         name: item.name,
                         text: item.text ? item.text : undefined,
-                        initialPrice: item.initialPrice
-                            ? item.initialPrice
-                            : undefined,
+                        initialPrice: item.initialPrice ? item.initialPrice : undefined,
                         quantity: item.quantity ? item.quantity : undefined
                     },
                     create: {
@@ -98,6 +113,18 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     });
                 }
                 return newItem;
+            }),
+            signup: (_, { username, password, email }) => __awaiter(void 0, void 0, void 0, function* () {
+                if (username == '' || password == '' || email == '')
+                    throw new Error('Missing fields');
+                const account = yield prisma.account.create({
+                    data: {
+                        username: username,
+                        email: email,
+                        password: password
+                    }
+                });
+                return account;
             })
         }
     };

@@ -18,7 +18,7 @@ export type Account = {
   credits: Scalars['String'];
   email: Scalars['String'];
   id: Scalars['Int'];
-  userName: Scalars['String'];
+  username: Scalars['String'];
 };
 
 export type Auction = {
@@ -76,9 +76,16 @@ export type ItemInput = {
   text?: InputMaybe<Scalars['String']>;
 };
 
+export type MabyeAccount = {
+  __typename?: 'MabyeAccount';
+  account?: Maybe<Account>;
+  error?: Maybe<Scalars['String']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   newItem?: Maybe<Item>;
+  signup?: Maybe<Account>;
 };
 
 
@@ -86,14 +93,28 @@ export type MutationNewItemArgs = {
   item: ItemInput;
 };
 
+
+export type MutationSignupArgs = {
+  email: Scalars['String'];
+  password: Scalars['String'];
+  username: Scalars['String'];
+};
+
 export type Query = {
   __typename?: 'Query';
   allAuctions?: Maybe<Array<Auction>>;
   allItems: Array<Item>;
   getItem?: Maybe<Item>;
+  login?: Maybe<Account>;
 };
 
 
 export type QueryGetItemArgs = {
   id: Scalars['Int'];
+};
+
+
+export type QueryLoginArgs = {
+  email: Scalars['String'];
+  password: Scalars['String'];
 };

@@ -48,13 +48,15 @@ model Auction {
 }
 
 model Account {
-  id          Int      @id @default(autoincrement())
-  userName    String
-  passeWord   String
+  id       Int    @id @default(autoincrement())
+  username String
+  password String
+
   email       String   @unique
+  ative       Boolean  @default(false)
   createdDate DateTime @default(now())
 
-  Credits Float @default(0)
+  credits Float @default(0)
 
   AuctionsWins  Auction[] @relation("winner")
   AuctionsOwner Auction[] @relation("owner")

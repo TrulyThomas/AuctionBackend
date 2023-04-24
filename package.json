@@ -7,7 +7,7 @@
       "build": "npx tsc",
       "start": "npx tsc && node index.js",
       "generate": "graphql-codegen --config ../codegen.yaml",
-      "dev": "concurrently \"npx tsc --watch\" \"graphql-codegen --config ../codegen.yaml\" \"nodemon --inspect index.js\""
+      "dev": "concurrently \"npx tsc --watch\" \"graphql-codegen --config ../codegen.yaml && node index.js\""
    },
    "author": "Thomas Damsgaard & Malthe 'KING' Emtkjær",
    "license": "ISC",
