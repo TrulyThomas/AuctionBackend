@@ -1,10 +1,8 @@
 FROM node:18
 WORKDIR /api
-COPY package.json .
-COPY package-lock.json .
+COPY package*.json .
 RUN npm i --silent
-COPY . .
+COPY ./ ./
 RUN npx prisma migrate dev
-COPY . .
 EXPOSE 4000
 CMD ["npm", "run", "start"]
