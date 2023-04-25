@@ -15,7 +15,6 @@ export type Scalars = {
 export type Account = {
   __typename?: 'Account';
   createdDate: Scalars['String'];
-  credits: Scalars['String'];
   email: Scalars['String'];
   id: Scalars['Int'];
   username: Scalars['String'];
@@ -74,12 +73,6 @@ export type ItemInput = {
   name: Scalars['String'];
   quantity?: InputMaybe<Scalars['Int']>;
   text?: InputMaybe<Scalars['String']>;
-};
-
-export type MabyeAccount = {
-  __typename?: 'MabyeAccount';
-  account?: Maybe<Account>;
-  error?: Maybe<Scalars['String']>;
 };
 
 export type Mutation = {

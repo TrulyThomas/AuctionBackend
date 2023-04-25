@@ -21,7 +21,6 @@ type Account {
    username: String!
    email: String!
    createdDate: String!
-   credits: String!
 }
 
 type Image {
@@ -54,11 +53,6 @@ type Bid {
    id: Int!
    auction: Auction!
    bid: Float!
-}
-
-type MabyeAccount {
-   account: Account
-   error: String
 }
 
 type Query {

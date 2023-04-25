@@ -56,8 +56,6 @@ model Account {
   ative       Boolean  @default(false)
   createdDate DateTime @default(now())
 
-  credits Float @default(0)
-
   AuctionsWins  Auction[] @relation("winner")
   AuctionsOwner Auction[] @relation("owner")
   role          String    @default("User")

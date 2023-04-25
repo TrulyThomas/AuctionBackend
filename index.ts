@@ -1,9 +1,10 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
-import { Item, ItemInput, MabyeAccount } from './gql-types'
+import { Account, Item, ItemInput, MabyeAccount } from './gql-types'
 var { graphqlHTTP } = require('express-graphql')
 var { makeExecutableSchema } = require('@graphql-tools/schema')
 const { loadFiles } = require('@graphql-tools/load-files')
+const bcrypt = require('bcrypt')
 
 const cors = require('cors')
 
@@ -43,20 +44,29 @@ const main = async () => {
          },
          login: async (_: any, { email, password }: { email: string; password: string }) => {
             const account = await prisma.account.findMany({
-               where: { email: email, password: password },
+               where: { email: email },
                select: {
                   id: true,
                   username: true,
                   email: true,
-                  credits: true,
-                  createdDate: true
+                  createdDate: true,
+                  password: true
                }
             })
 
             if (account.length == 0) throw new Error('No account found')
             if (account.length > 1) throw new Error('Multiple accounts found')
 
-            return account[0]
+            if (!bcrypt.compare(password, account[0].password)) throw new Error('Wrong password')
+
+            const returnAccount = {
+               createdDate: account[0].createdDate.toString(),
+               email: account[0].email,
+               id: account[0].id,
+               username: account[0].username
+            } as Account
+
+            return returnAccount
          }
       },
       Mutation: {
@@ -116,7 +126,7 @@ const main = async () => {
                data: {
                   username: username,
                   email: email,
-                  password: password
+                  password: await bcrypt.hash(password, 10)
                }
             })
 

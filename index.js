@@ -17,6 +17,7 @@ const client_1 = require("@prisma/client");
 var { graphqlHTTP } = require('express-graphql');
 var { makeExecutableSchema } = require('@graphql-tools/schema');
 const { loadFiles } = require('@graphql-tools/load-files');
+const bcrypt = require('bcrypt');
 const cors = require('cors');
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const prisma = new client_1.PrismaClient();
@@ -50,20 +51,28 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
             }),
             login: (_, { email, password }) => __awaiter(void 0, void 0, void 0, function* () {
                 const account = yield prisma.account.findMany({
-                    where: { email: email, password: password },
+                    where: { email: email },
                     select: {
                         id: true,
                         username: true,
                         email: true,
-                        credits: true,
-                        createdDate: true
+                        createdDate: true,
+                        password: true
                     }
                 });
                 if (account.length == 0)
                     throw new Error('No account found');
                 if (account.length > 1)
                     throw new Error('Multiple accounts found');
-                return account[0];
+                if (!bcrypt.compare(password, account[0].password))
+                    throw new Error('Wrong password');
+                const returnAccount = {
+                    createdDate: account[0].createdDate.toString(),
+                    email: account[0].email,
+                    id: account[0].id,
+                    username: account[0].username
+                };
+                return returnAccount;
             })
         },
         Mutation: {
@@ -121,7 +130,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     data: {
                         username: username,
                         email: email,
-                        password: password
+                        password: yield bcrypt.hash(password, 10)
                     }
                 });
                 return account;
