@@ -14,11 +14,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 var { graphqlHTTP } = require('express-graphql');
 var { makeExecutableSchema } = require('@graphql-tools/schema');
 const { loadFiles } = require('@graphql-tools/load-files');
 const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
+require('dotenv').config();
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const prisma = new client_1.PrismaClient();
     const resolvers = {
@@ -57,7 +60,8 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                         username: true,
                         email: true,
                         createdDate: true,
-                        password: true
+                        password: true,
+                        role: true
                     }
                 });
                 if (account.length == 0)
@@ -66,18 +70,27 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     throw new Error('Multiple accounts found');
                 if (!bcrypt.compare(password, account[0].password))
                     throw new Error('Wrong password');
+                const user = {
+                    email: account[0].email,
+                    id: account[0].id,
+                    role: account[0].role
+                };
                 const returnAccount = {
                     createdDate: account[0].createdDate.toString(),
                     email: account[0].email,
                     id: account[0].id,
                     username: account[0].username
                 };
-                return returnAccount;
+                const accessToken = jsonwebtoken_1.default.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '12h' });
+                return { token: accessToken, account: returnAccount, expiresInDays: 0.5 };
             })
         },
         Mutation: {
-            newItem: (_, { item }) => __awaiter(void 0, void 0, void 0, function* () {
+            newItem: (_, { item }, { user }) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e, _f, _g;
+                console.log(user);
+                if (user.role != 'seller')
+                    throw new Error('Not authorized');
                 const newItem = yield prisma.item.upsert({
                     where: { id: (_a = item.id) !== null && _a !== void 0 ? _a : 0 },
                     update: {
@@ -142,13 +155,36 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         resolvers,
         typeDefs: typeDefs
     });
+    const loggingMiddleware = (req, res, next) => {
+        var _a;
+        console.log(req.cookies['accessToken']);
+        const accessToken = (_a = req.cookies['accessToken']) !== null && _a !== void 0 ? _a : null;
+        if (accessToken) {
+            jsonwebtoken_1.default.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+                if (err)
+                    return res.sendStatus(403);
+                req.user = user;
+            });
+        }
+        next();
+    };
+    var corsOptions = {
+        origin: 'http://localhost:3000',
+        credentials: true
+    };
     var app = (0, express_1.default)();
+    app.use(cookieParser());
     app.use(express_1.default.json({ limit: '50mb' }));
-    app.use(cors());
-    app.use('/graphql', graphqlHTTP({
-        schema: schema,
-        graphiql: true
-    }));
+    app.use(loggingMiddleware);
+    app.use(cors(corsOptions));
+    app.use('/graphql', graphqlHTTP((req) => ({
+        schema,
+        graphiql: true,
+        context: {
+            user: req.user,
+            cookies: req.cookies // Access cookies through req.cookies
+        }
+    })));
     app.listen(4000);
     console.log('BIG vibe');
 });

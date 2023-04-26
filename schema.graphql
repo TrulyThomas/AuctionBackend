@@ -21,6 +21,7 @@ type Account {
    username: String!
    email: String!
    createdDate: String!
+   role: String!
 }
 
 type Image {
@@ -55,11 +56,17 @@ type Bid {
    bid: Float!
 }
 
+type Token {
+   token: String!
+   expiresInDays: Float!
+   account: Account!
+}
+
 type Query {
    allItems: [Item!]!
    getItem(id: Int!): Item
    allAuctions: [Auction!]
-   login(email: String!, password: String!): Account
+   login(email: String!, password: String!): Token
 }
 
 type Mutation {

@@ -17,6 +17,7 @@ export type Account = {
   createdDate: Scalars['String'];
   email: Scalars['String'];
   id: Scalars['Int'];
+  role: Scalars['String'];
   username: Scalars['String'];
 };
 
@@ -98,7 +99,7 @@ export type Query = {
   allAuctions?: Maybe<Array<Auction>>;
   allItems: Array<Item>;
   getItem?: Maybe<Item>;
-  login?: Maybe<Account>;
+  login?: Maybe<Token>;
 };
 
 
@@ -110,4 +111,11 @@ export type QueryGetItemArgs = {
 export type QueryLoginArgs = {
   email: Scalars['String'];
   password: Scalars['String'];
+};
+
+export type Token = {
+  __typename?: 'Token';
+  account: Account;
+  expiresInDays: Scalars['Float'];
+  token: Scalars['String'];
 };

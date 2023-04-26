@@ -1,12 +1,15 @@
 import express from 'express'
+import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
-import { Account, Item, ItemInput, MabyeAccount } from './gql-types'
+import { Account, Item, ItemInput } from './gql-types'
+import jwt from 'jsonwebtoken'
 var { graphqlHTTP } = require('express-graphql')
 var { makeExecutableSchema } = require('@graphql-tools/schema')
 const { loadFiles } = require('@graphql-tools/load-files')
 const bcrypt = require('bcrypt')
-
+const cookieParser = require('cookie-parser')
 const cors = require('cors')
+require('dotenv').config()
 
 const main = async () => {
    const prisma = new PrismaClient()
@@ -50,7 +53,8 @@ const main = async () => {
                   username: true,
                   email: true,
                   createdDate: true,
-                  password: true
+                  password: true,
+                  role: true
                }
             })
 
@@ -59,6 +63,12 @@ const main = async () => {
 
             if (!bcrypt.compare(password, account[0].password)) throw new Error('Wrong password')
 
+            const user = {
+               email: account[0].email,
+               id: account[0].id,
+               role: account[0].role
+            }
+
             const returnAccount = {
                createdDate: account[0].createdDate.toString(),
                email: account[0].email,
@@ -66,11 +76,16 @@ const main = async () => {
                username: account[0].username
             } as Account
 
-            return returnAccount
+            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '12h' })
+            return { token: accessToken, account: returnAccount, expiresInDays: 0.5 }
          }
       },
       Mutation: {
-         newItem: async (_: any, { item }: { item: ItemInput }) => {
+         newItem: async (_: any, { item }: { item: ItemInput }, { user }: { user: any }) => {
+            console.log(user)
+
+            if (user.role != 'seller') throw new Error('Not authorized')
+
             const newItem = await prisma.item.upsert({
                where: { id: item.id ?? 0 },
                update: {
@@ -142,15 +157,41 @@ const main = async () => {
       typeDefs: typeDefs
    })
 
+   const loggingMiddleware = (req: any, res: any, next: () => void) => {
+      console.log(req.cookies['accessToken'])
+
+      const accessToken = req.cookies['accessToken'] ?? null
+      if (accessToken) {
+         jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!, (err: any, user: any) => {
+            if (err) return res.sendStatus(403)
+            req.user = user
+         })
+      }
+
+      next()
+   }
+
+   var corsOptions = {
+      origin: 'http://localhost:3000',
+      credentials: true
+   }
+
    var app = express()
+   app.use(cookieParser())
    app.use(express.json({ limit: '50mb' }))
-   app.use(cors())
+   app.use(loggingMiddleware)
+   app.use(cors(corsOptions))
+
    app.use(
       '/graphql',
-      graphqlHTTP({
-         schema: schema,
-         graphiql: true
-      })
+      graphqlHTTP((req: any) => ({
+         schema,
+         graphiql: true,
+         context: {
+            user: req.user, // Access user through req.user
+            cookies: req.cookies // Access cookies through req.cookies
+         }
+      }))
    )
 
    app.listen(4000)
