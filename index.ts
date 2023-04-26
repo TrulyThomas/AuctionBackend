@@ -110,7 +110,7 @@ const main = async () => {
    app.use(express.json({ limit: '50mb' }))
    app.use(cors())
    app.use(
-      '/graphql',
+      '/api/graphql',
       graphqlHTTP({
          schema: schema,
          graphiql: true
