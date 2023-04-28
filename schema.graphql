@@ -56,17 +56,22 @@ type Bid {
    bid: Float!
 }
 
+type Credentials {
+   accessToken: Token!
+   account: Account!
+}
+
 type Token {
    token: String!
    expiresInDays: Float!
-   account: Account!
 }
 
 type Query {
    allItems: [Item!]!
    getItem(id: Int!): Item
    allAuctions: [Auction!]
-   login(email: String!, password: String!): Token
+   login(email: String!, password: String!): Credentials
+   validateUser(token: String!): Credentials
 }
 
 type Mutation {

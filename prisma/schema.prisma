@@ -20,6 +20,8 @@ model Item {
   auction      Auction? @relation(fields: [auctionId], references: [id])
   auctionId    Int?
   createdDate  DateTime @default(now())
+  createdById  Account  @relation(fields: [accountId], references: [id])
+  accountId    Int
 }
 
 model Image {
@@ -59,6 +61,8 @@ model Account {
   AuctionsWins  Auction[] @relation("winner")
   AuctionsOwner Auction[] @relation("owner")
   role          String    @default("User")
+  banned        String    @default("")
+  Item          Item[]
 }
 
 model Bid {

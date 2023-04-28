@@ -42,6 +42,12 @@ export type Bid = {
   id: Scalars['Int'];
 };
 
+export type Credentials = {
+  __typename?: 'Credentials';
+  accessToken: Token;
+  account: Account;
+};
+
 export type Image = {
   __typename?: 'Image';
   base64data: Scalars['String'];
@@ -99,7 +105,8 @@ export type Query = {
   allAuctions?: Maybe<Array<Auction>>;
   allItems: Array<Item>;
   getItem?: Maybe<Item>;
-  login?: Maybe<Token>;
+  login?: Maybe<Credentials>;
+  validateUser?: Maybe<Credentials>;
 };
 
 
@@ -113,9 +120,13 @@ export type QueryLoginArgs = {
   password: Scalars['String'];
 };
 
+
+export type QueryValidateUserArgs = {
+  token: Scalars['String'];
+};
+
 export type Token = {
   __typename?: 'Token';
-  account: Account;
   expiresInDays: Scalars['Float'];
   token: Scalars['String'];
 };

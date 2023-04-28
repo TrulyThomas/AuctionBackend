@@ -11,6 +11,12 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors')
 require('dotenv').config()
 
+enum Roles {
+   Client = 'Client',
+   Artisan = 'Artisan',
+   Admin = 'Admin'
+}
+
 const main = async () => {
    const prisma = new PrismaClient()
 
@@ -54,14 +60,15 @@ const main = async () => {
                   email: true,
                   createdDate: true,
                   password: true,
-                  role: true
+                  role: true,
+                  banned: true
                }
             })
-
             if (account.length == 0) throw new Error('No account found')
             if (account.length > 1) throw new Error('Multiple accounts found')
 
             if (!bcrypt.compare(password, account[0].password)) throw new Error('Wrong password')
+            if (account[0].banned != '') throw new Error('Account is banned')
 
             const user = {
                email: account[0].email,
@@ -73,18 +80,54 @@ const main = async () => {
                createdDate: account[0].createdDate.toString(),
                email: account[0].email,
                id: account[0].id,
-               username: account[0].username
+               username: account[0].username,
+               role: account[0].role
             } as Account
 
-            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '12h' })
-            return { token: accessToken, account: returnAccount, expiresInDays: 0.5 }
+            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '3h' })
+            return { account: returnAccount, accessToken: { token: accessToken, expiresInDays: 0.125 } }
+         },
+         validateUser: async (_: any, { token }: { token: string }) => {
+            return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, async (err: any, user: any) => {
+               if (err) throw new Error('Invalid token')
+
+               const account = await prisma.account.findUnique({
+                  where: { id: user.id },
+                  select: {
+                     id: true,
+                     username: true,
+                     email: true,
+                     createdDate: true,
+                     role: true,
+                     banned: true
+                  }
+               })
+
+               if (!account) throw new Error('Account not found')
+               if (account.banned != '') throw new Error('Account is banned')
+               const accountUser = {
+                  email: account.email,
+                  id: account.id,
+                  role: account.role
+               }
+
+               const returnAccount = {
+                  createdDate: account.createdDate.toString(),
+                  email: account.email,
+                  id: account.id,
+                  username: account.username,
+                  role: account.role
+               } as Account
+
+               const accessToken = jwt.sign(accountUser, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '3h' })
+               console.log(returnAccount)
+               return { account: returnAccount, accessToken: { token: accessToken, expiresInDays: 0.125 } }
+            })
          }
       },
       Mutation: {
          newItem: async (_: any, { item }: { item: ItemInput }, { user }: { user: any }) => {
-            console.log(user)
-
-            if (user.role != 'seller') throw new Error('Not authorized')
+            if (![Roles.Admin, Roles.Artisan].includes(user.role)) throw new Error('Not authorized')
 
             const newItem = await prisma.item.upsert({
                where: { id: item.id ?? 0 },
@@ -158,13 +201,10 @@ const main = async () => {
    })
 
    const loggingMiddleware = (req: any, res: any, next: () => void) => {
-      console.log(req.cookies['accessToken'])
-
       const accessToken = req.cookies['accessToken'] ?? null
       if (accessToken) {
          jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!, (err: any, user: any) => {
-            if (err) return res.sendStatus(403)
-            req.user = user
+            if (!err) req.user = user
          })
       }
 
@@ -188,8 +228,8 @@ const main = async () => {
          schema,
          graphiql: true,
          context: {
-            user: req.user, // Access user through req.user
-            cookies: req.cookies // Access cookies through req.cookies
+            user: req.user,
+            cookies: req.cookies
          }
       }))
    )

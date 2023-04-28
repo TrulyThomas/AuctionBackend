@@ -22,6 +22,12 @@ const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 require('dotenv').config();
+var Roles;
+(function (Roles) {
+    Roles["Client"] = "Client";
+    Roles["Artisan"] = "Artisan";
+    Roles["Admin"] = "Admin";
+})(Roles || (Roles = {}));
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const prisma = new client_1.PrismaClient();
     const resolvers = {
@@ -61,7 +67,8 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                         email: true,
                         createdDate: true,
                         password: true,
-                        role: true
+                        role: true,
+                        banned: true
                     }
                 });
                 if (account.length == 0)
@@ -70,6 +77,8 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     throw new Error('Multiple accounts found');
                 if (!bcrypt.compare(password, account[0].password))
                     throw new Error('Wrong password');
+                if (account[0].banned != '')
+                    throw new Error('Account is banned');
                 const user = {
                     email: account[0].email,
                     id: account[0].id,
@@ -79,17 +88,53 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     createdDate: account[0].createdDate.toString(),
                     email: account[0].email,
                     id: account[0].id,
-                    username: account[0].username
+                    username: account[0].username,
+                    role: account[0].role
                 };
-                const accessToken = jsonwebtoken_1.default.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '12h' });
-                return { token: accessToken, account: returnAccount, expiresInDays: 0.5 };
+                const accessToken = jsonwebtoken_1.default.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '3h' });
+                return { account: returnAccount, accessToken: { token: accessToken, expiresInDays: 0.125 } };
+            }),
+            validateUser: (_, { token }) => __awaiter(void 0, void 0, void 0, function* () {
+                return jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => __awaiter(void 0, void 0, void 0, function* () {
+                    if (err)
+                        throw new Error('Invalid token');
+                    const account = yield prisma.account.findUnique({
+                        where: { id: user.id },
+                        select: {
+                            id: true,
+                            username: true,
+                            email: true,
+                            createdDate: true,
+                            role: true,
+                            banned: true
+                        }
+                    });
+                    if (!account)
+                        throw new Error('Account not found');
+                    if (account.banned != '')
+                        throw new Error('Account is banned');
+                    const accountUser = {
+                        email: account.email,
+                        id: account.id,
+                        role: account.role
+                    };
+                    const returnAccount = {
+                        createdDate: account.createdDate.toString(),
+                        email: account.email,
+                        id: account.id,
+                        username: account.username,
+                        role: account.role
+                    };
+                    const accessToken = jsonwebtoken_1.default.sign(accountUser, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '3h' });
+                    console.log(returnAccount);
+                    return { account: returnAccount, accessToken: { token: accessToken, expiresInDays: 0.125 } };
+                }));
             })
         },
         Mutation: {
             newItem: (_, { item }, { user }) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e, _f, _g;
-                console.log(user);
-                if (user.role != 'seller')
+                if (![Roles.Admin, Roles.Artisan].includes(user.role))
                     throw new Error('Not authorized');
                 const newItem = yield prisma.item.upsert({
                     where: { id: (_a = item.id) !== null && _a !== void 0 ? _a : 0 },
@@ -157,13 +202,11 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     });
     const loggingMiddleware = (req, res, next) => {
         var _a;
-        console.log(req.cookies['accessToken']);
         const accessToken = (_a = req.cookies['accessToken']) !== null && _a !== void 0 ? _a : null;
         if (accessToken) {
             jsonwebtoken_1.default.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-                if (err)
-                    return res.sendStatus(403);
-                req.user = user;
+                if (!err)
+                    req.user = user;
             });
         }
         next();
@@ -182,7 +225,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         graphiql: true,
         context: {
             user: req.user,
-            cookies: req.cookies // Access cookies through req.cookies
+            cookies: req.cookies
         }
     })));
     app.listen(4000);
