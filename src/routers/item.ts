@@ -27,7 +27,7 @@ export const itemRouter = router({
       })
       return item
    }),
-   CreateItem: publicProcedure
+   putItem: publicProcedure
       .input(
          z.object({
             id: z.number(),

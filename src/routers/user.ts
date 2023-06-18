@@ -27,8 +27,8 @@ export const userRouter = router({
          if (account.length == 0) throw new Error('No account found')
          if (account.length > 1) throw new Error('Multiple accounts found')
 
-         if (!bcrypt.compare(opts.input.password, account[0].password)) throw new Error('Wrong password')
          if (account[0].banned != '') throw new Error('Account is banned')
+         if (!bcrypt.compare(opts.input.password, account[0].password)) throw new Error('Wrong account login')
 
          const user = {
             email: account[0].email,
@@ -74,5 +74,42 @@ export const userRouter = router({
          })
 
          return account
+      }),
+   validateUser: publicProcedure.input(z.object({ token: z.string() })).query(async (opts) => {
+      return jwt.verify(opts.input.token, process.env.ACCESS_TOKEN_SECRET!, async (err: any, user: any) => {
+         if (err) throw new Error('Invalid token')
+
+         const account = await prismaClient.account.findUnique({
+            where: { id: user.id },
+            select: {
+               id: true,
+               username: true,
+               email: true,
+               createdDate: true,
+               role: true,
+               banned: true
+            }
+         })
+
+         if (!account) throw new Error('Account not found')
+         if (account.banned != '') throw new Error('Account is banned')
+
+         const accountUser = {
+            email: account.email,
+            id: account.id,
+            role: account.role
+         }
+
+         const returnAccount = {
+            createdDate: account.createdDate.toString(),
+            email: account.email,
+            id: account.id,
+            username: account.username,
+            role: account.role
+         }
+
+         const accessToken = jwt.sign(accountUser, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '3h' })
+         return { account: returnAccount, accessToken: { token: accessToken, expiresInDays: 0.125 } }
       })
+   })
 })
