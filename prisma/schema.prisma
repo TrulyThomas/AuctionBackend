@@ -20,8 +20,11 @@ model Item {
   auction      Auction? @relation(fields: [auctionId], references: [id])
   auctionId    Int?
   createdDate  DateTime @default(now())
-  Account      Account? @relation(fields: [accountId], references: [id])
-  accountId    Int?
+
+  isPublic Boolean @default(false)
+
+  Account   Account? @relation(fields: [accountId], references: [id])
+  accountId Int?
 }
 
 model Image {

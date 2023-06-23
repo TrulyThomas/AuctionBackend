@@ -4,16 +4,13 @@ import { PrismaClient } from '@prisma/client'
 import jwt from 'jsonwebtoken'
 
 export const createContext = ({ req, res }: trpcExpress.CreateExpressContextOptions) => {
-   let user = undefined
-
    if (req.cookies['accessToken']) {
       jwt.verify(req.cookies['accessToken'], process.env.ACCESS_TOKEN_SECRET!, (err: any, authUser: any) => {
-         if (!err) user = authUser
+         if (!err) return { user: authUser as accountData }
       })
    }
-   return {
-      user
-   }
+
+   return { user: null as null | accountData }
 }
 
 type Context = inferAsyncReturnType<typeof createContext>

@@ -94,22 +94,16 @@ export const userRouter = router({
          if (!account) throw new Error('Account not found')
          if (account.banned != '') throw new Error('Account is banned')
 
-         const accountUser = {
-            email: account.email,
-            id: account.id,
-            role: account.role
-         }
-
-         const returnAccount = {
+         const accountData = {
             createdDate: account.createdDate.toString(),
             email: account.email,
             id: account.id,
             username: account.username,
             role: account.role
-         }
+         } as accountData
 
-         const accessToken = jwt.sign(accountUser, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '3h' })
-         return { account: returnAccount, accessToken: { token: accessToken, expiresInDays: 0.125 } }
+         const accessToken = jwt.sign(accountData, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '3h' })
+         return { account: accountData, accessToken: { token: accessToken, expiresInDays: 0.125 } }
       })
    })
 })

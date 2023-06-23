@@ -4,7 +4,10 @@ import { zImage } from '../models/zod'
 
 export const itemRouter = router({
    getAll: publicProcedure.query(async () => {
-      let items = await prismaClient.item.findMany()
+      let items = await prismaClient.item.findMany({
+         where: { isPublic: true }
+      })
+
       return items
    }),
    get: publicProcedure.input(z.object({ id: z.number() })).query(async (opts) => {
@@ -16,15 +19,20 @@ export const itemRouter = router({
             text: true,
             initialPrice: true,
             quantity: true,
+            isPublic: true,
             images: {
                select: {
                   base64data: true,
                   order: true,
                   id: true
                }
-            }
+            },
+            accountId: true
          }
       })
+
+      if (item?.isPublic == false && item?.accountId != opts.ctx.user?.id) throw new Error('No Item found')
+
       return item
    }),
    putItem: publicProcedure
@@ -35,24 +43,39 @@ export const itemRouter = router({
             text: z.string(),
             initialPrice: z.number(),
             quantity: z.number(),
-            images: z.array(zImage)
+            images: z.array(zImage),
+            isPublic: z.boolean()
          })
       )
       .mutation(async (opts) => {
+         if (opts.ctx.user?.role && ![Roles.Admin, Roles.Artisan].includes(opts.ctx.user?.role)) throw new Error('Not authorized')
+
          const item = opts.input
+         let checkItem = await prismaClient.item.findUnique({
+            where: { id: opts.input.id },
+            select: {
+               accountId: true
+            }
+         })
+
+         if (checkItem?.accountId != opts.ctx.user?.id) throw new Error('Not authorized to edit this item')
+
          const newItem = await prismaClient.item.upsert({
             where: { id: item.id ?? 0 },
             update: {
                name: item.name,
                text: item.text ? item.text : undefined,
                initialPrice: item.initialPrice ? item.initialPrice : undefined,
-               quantity: item.quantity ? item.quantity : undefined
+               quantity: item.quantity ? item.quantity : undefined,
+               isPublic: item.isPublic ? item.isPublic : undefined
             },
             create: {
                name: item.name,
                text: item.text ?? undefined,
                initialPrice: item.initialPrice ?? undefined,
-               quantity: item.quantity ?? undefined
+               quantity: item.quantity ?? undefined,
+               Account: { connect: { id: opts.ctx.user?.id } },
+               isPublic: item.isPublic ?? undefined
             }
          })
 
