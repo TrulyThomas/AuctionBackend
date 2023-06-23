@@ -20,6 +20,11 @@ model Item {
   auction      Auction? @relation(fields: [auctionId], references: [id])
   auctionId    Int?
   createdDate  DateTime @default(now())
+
+  isPublic Boolean @default(false)
+
+  Account   Account? @relation(fields: [accountId], references: [id])
+  accountId Int?
 }
 
 model Image {
@@ -49,16 +54,20 @@ model Auction {
 
 model Account {
   id          Int      @id @default(autoincrement())
-  userName    String
-  passeWord   String
+  username    String
+  password    String
   email       String   @unique
   createdDate DateTime @default(now())
+  ative       Boolean  @default(false)
 
   Credits Float @default(0)
 
   AuctionsWins  Auction[] @relation("winner")
   AuctionsOwner Auction[] @relation("owner")
   role          String    @default("User")
+
+  banned String @default("")
+  Item   Item[]
 }
 
 model Bid {
