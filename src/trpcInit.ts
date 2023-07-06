@@ -2,6 +2,7 @@ import { initTRPC, inferAsyncReturnType } from '@trpc/server'
 import * as trpcExpress from '@trpc/server/adapters/express'
 import { PrismaClient } from '@prisma/client'
 import jwt from 'jsonwebtoken'
+import { accountData } from './models/types'
 
 export const createContext = ({ req, res }: trpcExpress.CreateExpressContextOptions) => {
    if (req.cookies['accessToken']) {

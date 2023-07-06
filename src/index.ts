@@ -1,7 +1,7 @@
 import express from 'express'
 import * as trpcExpress from '@trpc/server/adapters/express'
 import { itemRouter } from './routers/item'
-import { createContext, router } from './trpcInit'
+import { createContext, publicProcedure, router } from './trpcInit'
 import { auctionRouter } from './routers/auction'
 import { userRouter } from './routers/user'
 import jwt from 'jsonwebtoken'
@@ -12,7 +12,8 @@ const cors = require('cors')
 const appRouter = router({
    item: itemRouter,
    auction: auctionRouter,
-   user: userRouter
+   user: userRouter,
+   greeting: publicProcedure.query(() => 'hello tRPC!')
 })
 
 var corsOptions = {
@@ -26,12 +27,19 @@ app.use(cookieParser())
 app.use(express.json({ limit: '50mb' }))
 app.use(cors())
 app.use(
-   '/api',
+   '/trpc',
    trpcExpress.createExpressMiddleware({
       router: appRouter,
       createContext
    })
 )
+app.get('/', function (req, res) {
+   res.send('Hello World')
+})
+
+app.use('/test', (req, res) => {
+   res.send('Hello World')
+})
 
 app.listen(4000)
 console.log('Backend running..!')

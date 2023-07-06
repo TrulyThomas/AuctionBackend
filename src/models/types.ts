@@ -1,4 +1,4 @@
-type accountData = {
+export type accountData = {
    createdDate: string
    email: string
    id: number
@@ -6,7 +6,7 @@ type accountData = {
    role: Roles
 }
 
-enum Roles {
+export enum Roles {
    Client = 'Client',
    Artisan = 'Artisan',
    Admin = 'Admin'

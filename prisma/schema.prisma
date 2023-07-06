@@ -21,7 +21,7 @@ model Item {
   auctionId    Int?
   createdDate  DateTime @default(now())
 
-  isPublic Boolean @default(false)
+  isPublished Boolean @default(false)
 
   Account   Account? @relation(fields: [accountId], references: [id])
   accountId Int?

@@ -2,6 +2,8 @@ import { router, publicProcedure, prismaClient } from '../trpcInit'
 import { z } from 'zod'
 const bcrypt = require('bcrypt')
 import jwt from 'jsonwebtoken'
+import { accountData } from '../models/types'
+require('dotenv').config()
 
 export const userRouter = router({
    login: publicProcedure
@@ -11,7 +13,7 @@ export const userRouter = router({
             password: z.string()
          })
       )
-      .query(async (opts) => {
+      .mutation(async (opts) => {
          const account = await prismaClient.account.findMany({
             where: { email: opts.input.email },
             select: {
@@ -60,7 +62,7 @@ export const userRouter = router({
             password: z.string().nonempty()
          })
       )
-      .query(async (opts) => {
+      .mutation(async (opts) => {
          const account = await prismaClient.account.create({
             data: {
                username: opts.input.username,

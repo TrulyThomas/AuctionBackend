@@ -1,11 +1,27 @@
 import { router, publicProcedure, prismaClient } from '../trpcInit'
 import { z } from 'zod'
 import { zImage } from '../models/zod'
+import { Roles } from '../models/types'
+import { TRPCError } from '@trpc/server'
 
 export const itemRouter = router({
    getAll: publicProcedure.query(async () => {
       let items = await prismaClient.item.findMany({
-         where: { isPublic: true }
+         where: { isPublished: true },
+         select: {
+            id: true,
+            name: true,
+            text: true,
+            initialPrice: true,
+            quantity: true,
+            images: {
+               select: {
+                  base64data: true,
+                  order: true,
+                  id: true
+               }
+            }
+         }
       })
 
       return items
@@ -19,7 +35,7 @@ export const itemRouter = router({
             text: true,
             initialPrice: true,
             quantity: true,
-            isPublic: true,
+            isPublished: true,
             images: {
                select: {
                   base64data: true,
@@ -31,7 +47,11 @@ export const itemRouter = router({
          }
       })
 
-      if (item?.isPublic == false && item?.accountId != opts.ctx.user?.id) throw new Error('No Item found')
+      let authorized = false
+      if (opts.ctx.user?.id) authorized = item?.accountId == opts.ctx.user?.id
+      if (opts.ctx.user?.role == Roles.Admin) authorized = true
+
+      if (item?.isPublished == false && !authorized) throw new TRPCError({ code: 'UNAUTHORIZED' })
 
       return item
    }),
@@ -44,7 +64,7 @@ export const itemRouter = router({
             initialPrice: z.number(),
             quantity: z.number(),
             images: z.array(zImage),
-            isPublic: z.boolean()
+            isPublished: z.boolean()
          })
       )
       .mutation(async (opts) => {
@@ -67,7 +87,7 @@ export const itemRouter = router({
                text: item.text ? item.text : undefined,
                initialPrice: item.initialPrice ? item.initialPrice : undefined,
                quantity: item.quantity ? item.quantity : undefined,
-               isPublic: item.isPublic ? item.isPublic : undefined
+               isPublished: item.isPublished ? item.isPublished : undefined
             },
             create: {
                name: item.name,
@@ -75,7 +95,7 @@ export const itemRouter = router({
                initialPrice: item.initialPrice ?? undefined,
                quantity: item.quantity ?? undefined,
                Account: { connect: { id: opts.ctx.user?.id } },
-               isPublic: item.isPublic ?? undefined
+               isPublished: item.isPublished ?? undefined
             }
          })
 
